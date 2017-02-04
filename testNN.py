@@ -46,6 +46,7 @@ x_data= np.random.rand(2,row_count)*10
 y_data= np.zeros((row_count ,1))
 
 print(" circleInfo1[0:2]", circleInfo1[0:2],'r',circleInfo1[2]  )
+
 def check( x, y ):
   #  centerPos= circleInfo1[0:2]
     centerPos2= circleInfo2[0:2]
@@ -57,7 +58,7 @@ def check( x, y ):
 
     centerPos2= circleInfo2[0:2]
     dist2 = distance.euclidean(centerPos2, (x, y))
-    if( math.log2(x-5)>y ):
+    if( x >5 and x<7 ):
         return 1
 
 
