@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-row_count =3000
-iteration= 500;
+row_count =5000
+iteration= 200
 HIDDEN_NODES = 50
-learning_rate = 0.01
+learning_rate = 0.002
 
-circleInfo1= (2,2,2)
-circleInfo2 = (5,5,3)
-circleInfo3 = (6,1,1)
+circleInfo1= (3,1.5,1)
+circleInfo2 = (7,7,2)
+circleInfo3 = (8,3,1.5)
 
 
 def xavier_init(n_inputs, n_outputs, uniform=True):
@@ -48,30 +48,29 @@ y_data= np.zeros((row_count ,1))
 print(" circleInfo1[0:2]", circleInfo1[0:2],'r',circleInfo1[2]  )
 
 def check( x, y ):
-  #  centerPos= circleInfo1[0:2]
+    centerPos= circleInfo1[0:2]
     centerPos2= circleInfo2[0:2]
-  #  centerPos3 = circleInfo3[0:2]
+    centerPos3 = circleInfo3[0:2]
 
-  #  dist1= distance.euclidean(centerPos, (x,y))
-
-  #  dist3 = distance.euclidean(centerPos3, (x, y))
-
-    centerPos2= circleInfo2[0:2]
+    dist1= distance.euclidean(centerPos, (x,y))
     dist2 = distance.euclidean(centerPos2, (x, y))
-    if( x >5 and x<7 ):
-        return 1
+    dist3 = distance.euclidean(centerPos3, (x, y))
 
 
-    """
+
+    centerPos2= circleInfo2[0:2]
+
     if(dist1 <=circleInfo1[2] ):
         return 1
 
     if(dist2 <= circleInfo2[2]):
-       return 1
+        return 1
 
     if(dist3 <=circleInfo3[2] ):
         return 1
-    """
+
+
+
 
     return 0
 
@@ -80,8 +79,6 @@ def check( x, y ):
 
 for i in range(row_count):
     y_data[i][0]=  check(x_data[0][i] ,x_data[1][i])
-
-
 
 print("x_data ","\n", x_data)
 print("y_data ","\n", y_data)
@@ -100,21 +97,30 @@ def w1hypo():
 def w3hypo():
     W1 = tf.get_variable("W1", shape=[x_len, HIDDEN_NODES], initializer=xavier_init(x_len, HIDDEN_NODES))
     W2 = tf.get_variable("W2", shape=[HIDDEN_NODES, HIDDEN_NODES], initializer=xavier_init(HIDDEN_NODES, HIDDEN_NODES))
-    W3 = tf.get_variable("W3", shape=[HIDDEN_NODES, 1], initializer=xavier_init(HIDDEN_NODES, 1))
+    W3 = tf.get_variable("W3", shape=[HIDDEN_NODES, HIDDEN_NODES], initializer=xavier_init(HIDDEN_NODES, HIDDEN_NODES))
+    W4 = tf.get_variable("W4", shape=[HIDDEN_NODES, HIDDEN_NODES], initializer=xavier_init(HIDDEN_NODES, HIDDEN_NODES))
+    W5 = tf.get_variable("W5", shape=[HIDDEN_NODES, 1], initializer=xavier_init(HIDDEN_NODES, 1))
 
     b1 = tf.Variable(tf.random_uniform([HIDDEN_NODES]))
     b2 = tf.Variable(tf.random_uniform([HIDDEN_NODES]))
-    b3 = tf.Variable(tf.random_uniform([1]))
+    b3 = tf.Variable(tf.random_uniform([HIDDEN_NODES]))
+    b4 = tf.Variable(tf.random_uniform([HIDDEN_NODES]))
+    b5 = tf.Variable(tf.random_uniform([1]))
 
     L1 = tf.nn.relu(tf.matmul(tf.transpose(X), W1)+b1)
     L2 = tf.nn.relu(tf.matmul(L1, W2)+b2)
-    L3 = tf.matmul(L2, W3)+b3
-    return tf.sigmoid(L3)
+    L3 = tf.nn.relu(tf.matmul(L2, W3)+b3)
+    L4 = tf.nn.relu(tf.matmul(L3, W4)+b4)
+    L5 = tf.matmul(L4, W5)+b5
+    return tf.sigmoid( L5)
 
 hypothesis =w3hypo()
 
-cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(hypothesis,Y)
-loss = tf.reduce_mean(cross_entropy)
+#cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits( hypothesis, Y )
+#loss = tf.reduce_mean(cross_entropy)
+
+cross_entropy = Y * tf.log(hypothesis) + (1 - Y) * tf.log(1 - hypothesis)
+loss = -tf.reduce_mean(cross_entropy)
 
 train= tf.train.AdamOptimizer(learning_rate).minimize(loss)
 init =tf.global_variables_initializer()
@@ -135,7 +141,8 @@ with tf.Session() as sess:
         if(step%(iteration/5) ==0):
             print(step, out_loss,out_accuracy)
 
-
+    _,out_loss,out_collect_prediction,out_accuracy=sess.run([train,loss,correct_prediction,accuracy], feed_dict= feed_dict )
+    print(step, out_loss, out_accuracy)
     boolean_prediction= tf.equal(correct_prediction,1)
 
     out_boolean_prediction=  sess.run(boolean_prediction, feed_dict=feed_dict)
@@ -165,16 +172,11 @@ with tf.Session() as sess:
     }
     df_2 = pd.DataFrame(circleData)
 
-   # plt.scatter(circleData["x"],circleData["y"],c=circleData["r"])
- #   circle1= plt.Circle((circleInfo1[0], circleInfo1[1]), circleInfo1[2], color='b', alpha=0.1)
- #   circle2= plt.Circle((circleInfo2[0], circleInfo2[1]), circleInfo2[2], color='b', alpha=0.1)
- #   ax = plt.gca()
- #   ax.add_artist(circle1)
- #   ax.add_artist(circle2)
+    plt.scatter(circleData["x"],circleData["y"],c=circleData["r"])
+    circle1= plt.Circle((circleInfo1[0], circleInfo1[1]), circleInfo1[2], color='b', alpha=0.1)
+    circle2= plt.Circle((circleInfo2[0], circleInfo2[1]), circleInfo2[2], color='b', alpha=0.1)
+    ax = plt.gca()
+    ax.add_artist(circle1)
+    ax.add_artist(circle2)
 
     plt.show()
-
-
-    test_x = 1
-    test_y = 1
-    print("Test ",test_x ," ",test_y, tf.floor(hypothesis + 0.5).eval(feed_dict={X: [[test_x],[test_y]] }) )
